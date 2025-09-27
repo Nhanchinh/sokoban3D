@@ -696,6 +696,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -720,8 +721,8 @@ Camera:
   m_GameObject: {fileID: 330585543}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -770,13 +771,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.60876137, y: 0, z: 0, w: 0.7933534}
-  m_LocalPosition: {x: 3, y: 10, z: -6}
+  m_LocalRotation: {x: 0.46174863, y: 0, z: 0, w: 0.8870109}
+  m_LocalPosition: {x: 5, y: 6, z: -16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 75, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 55, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -821,6 +822,29 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f27a41b960a68042a77409a2dddad58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 0}
+  offset: {x: 0, y: 6, z: -3}
+  followSpeed: 5
+  lookAtTarget: 0
+  lookOffset: {x: 0, y: 0, z: 0}
+  smoothFollow: 1
+  smoothTime: 0.2
+  autoFindPlayer: 1
+  searchInterval: 0.5
+  useFixedRotation: 1
+  fixedRotation: {x: 50, y: 0, z: 0}
 --- !u!1 &365781127
 GameObject:
   m_ObjectHideFlags: 0
@@ -2341,13 +2365,15 @@ MonoBehaviour:
     yOffset: 0.5
   - id: 66
     prefab: {fileID: 8395305904943422728, guid: 6dd53473879a44c429a53ab9550fc3c4, type: 3}
-    yOffset: 0
+    yOffset: 0.2
   - id: 71
     prefab: {fileID: 2477121569190223078, guid: 2a85866ff6195e24aa6ada5e9159b312, type: 3}
     yOffset: 0.02
   worldParent: {fileID: 674462296}
   playerPrefab: {fileID: 3414578318654374919, guid: 40e22f593af44bd4398173c9082e871a, type: 3}
-  playerYOffset: 0.5
+  playerYOffset: 0.2
+  use3DMode: 1
+  pathPrefab: {fileID: 173902511727618491, guid: 18fbc170017a7354bbbd7473581e4af7, type: 3}
   mobileDpad: {fileID: 1762400133}
 --- !u!4 &674462296
 Transform:

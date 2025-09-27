@@ -24,6 +24,10 @@ public class MapLoader : MonoBehaviour
 	public GameObject playerPrefab;
 	public float playerYOffset = 0.5f;
 
+	[Header("3D Map Settings")]
+	public bool use3DMode = true;
+	public GameObject pathPrefab; // Ground ver2 cho đường đi
+
 	private Dictionary<char, GameObject> _dict;
 	private Dictionary<char, float> _yOffset;
 	public MobileDpad mobileDpad;
@@ -64,7 +68,93 @@ public class MapLoader : MonoBehaviour
 				Destroy(worldParent.GetChild(i).gameObject);
 		}
 
-		BuildFromText(ta.text);
+		if (use3DMode)
+		{
+			BuildFromText3D(ta.text);
+		}
+		else
+		{
+			BuildFromText(ta.text);
+		}
+	}
+
+	private void BuildFromText3D(string text)
+	{
+		string[] lines = text.Replace("\r", "").Split('\n');
+		int mapWidth = 0;
+		int mapHeight = lines.Length;
+
+		// Tìm chiều rộng tối đa
+		foreach (string line in lines)
+		{
+			if (line.Length > mapWidth) mapWidth = line.Length;
+		}
+
+		// Tạo một map 2D để xác định các vùng có thể đi được
+		bool[,] walkableArea = new bool[mapWidth, mapHeight];
+
+		// Đánh dấu vùng có thể đi được
+		for (int y = 0; y < lines.Length; y++)
+		{
+			string line = lines[y];
+			for (int x = 0; x < line.Length; x++)
+			{
+				char c = line[x];
+				
+				// Vùng có thể đi được: '.', 'P', 'B', 'G' (KHÔNG bao gồm '#')
+				if (c == '.' || c == 'P' || c == 'B' || c == 'G')
+				{
+					walkableArea[x, y] = true;
+				}
+			}
+		}
+
+		// Tạo Ground ver2 chỉ cho vùng có thể đi được
+		for (int y = 0; y < mapHeight; y++)
+		{
+			for (int x = 0; x < mapWidth; x++)
+			{
+				Vector3 basePos = new Vector3(x * cellSize, 0f, -y * cellSize);
+
+				// Chỉ tạo Ground ver2 cho vùng có thể đi được
+				if (walkableArea[x, y] && pathPrefab != null)
+				{
+					Instantiate(pathPrefab, basePos, Quaternion.identity, worldParent);
+				}
+			}
+		}
+
+		// Đặt tất cả các object (bao gồm cả tường #)
+		for (int y = 0; y < lines.Length; y++)
+		{
+			string line = lines[y];
+			for (int x = 0; x < line.Length; x++)
+			{
+				char c = line[x];
+				Vector3 basePos = new Vector3(x * cellSize, 0f, -y * cellSize);
+
+				if (c == 'P')
+				{
+					if (playerPrefab != null)
+					{
+						GameObject player = Instantiate(playerPrefab, basePos + Vector3.up * playerYOffset, Quaternion.identity, worldParent);
+						var pc = player.GetComponent<PlayerController>();
+						if (mobileDpad != null) mobileDpad.player = pc;
+
+						if (pc != null) pc.ResetInput();
+						if (mobileDpad != null) mobileDpad.ReleaseAll();
+					}
+					continue;
+				}
+
+				// Tất cả các tile khác (bao gồm cả '#')
+				if (_dict.TryGetValue(c, out var prefab))
+				{
+					float oy = _yOffset.TryGetValue(c, out var off) ? off : 0f;
+					Instantiate(prefab, basePos + Vector3.up * oy, Quaternion.identity, worldParent);
+				}
+			}
+		}
 	}
 
 	private void BuildFromText(string text)
@@ -85,32 +175,19 @@ public class MapLoader : MonoBehaviour
 					Instantiate(ground, basePos + Vector3.up * gy, Quaternion.identity, worldParent);
 				}
 
-				// Player xử lý riêng
-				// if (c == 'P')
-				// {
-				// 	if (playerPrefab != null)
-				// 	{
-				// 		GameObject player = Instantiate(playerPrefab, basePos, Quaternion.identity, worldParent);
-				// 		mobileDpad.player = player.GetComponent<PlayerController>();
-				// 	}
-					
-				// 	continue;
-				// }
-
-							if (c == 'P')
+				if (c == 'P')
+				{
+					if (playerPrefab != null)
 					{
-						if (playerPrefab != null)
-						{
-							GameObject player = Instantiate(playerPrefab, basePos, Quaternion.identity, worldParent);
-							var pc = player.GetComponent<PlayerController>();
-							if (mobileDpad != null) mobileDpad.player = pc;
+						GameObject player = Instantiate(playerPrefab, basePos, Quaternion.identity, worldParent);
+						var pc = player.GetComponent<PlayerController>();
+						if (mobileDpad != null) mobileDpad.player = pc;
 
-							// đảm bảo player mới luôn clean input
-							if (pc != null) pc.ResetInput();
-							if (mobileDpad != null) mobileDpad.ReleaseAll();
-						}
-						continue;
+						if (pc != null) pc.ResetInput();
+						if (mobileDpad != null) mobileDpad.ReleaseAll();
 					}
+					continue;
+				}
 
 				// Các tile khác theo ký tự
 				if (_dict.TryGetValue(c, out var prefab))
