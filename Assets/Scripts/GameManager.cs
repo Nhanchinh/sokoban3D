@@ -101,7 +101,7 @@ public class GameManager : MonoBehaviour
 		if (ta == null)
 		{
 			// hết map -> quay về màn chọn level
-			SceneManager.LoadScene("SelectLevel");
+			SceneManager.LoadScene("SelecLevel");
 			return;
 		}
 
