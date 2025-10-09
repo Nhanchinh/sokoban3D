@@ -86,6 +86,7 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5f;
     private bool isMoving = false;    // Trạng thái đang di chuyển
     private Animator animator;
+    
 
     // cờ giữ nút từ mobile UI
     public bool upHeld   = false;
@@ -103,6 +104,13 @@ public class PlayerController : MonoBehaviour
     {
         animator = GetComponent<Animator>();
     }
+
+    void Start()
+    {
+        // Fix initial position drift nếu có
+        FixPositionDrift();
+    }
+
     void Update()
     {
         if (isMoving) return;
@@ -119,6 +127,25 @@ public class PlayerController : MonoBehaviour
             transform.LookAt(transform.position + direction);
             animator.SetBool("Walk",true);
             TryToMove(direction);
+        }
+        
+        // Debug: Fix drift khi nhấn F8
+        if (Input.GetKeyDown(KeyCode.F8))
+        {
+            FixPositionDrift();
+        }
+    }
+
+    private void FixPositionDrift()
+    {
+        // Fix position drift bằng cách snap về grid
+        Vector3 currentPos = transform.position;
+        Vector3 fixedPos = AlignToGrid(currentPos);
+        
+        if (Vector3.Distance(currentPos, fixedPos) > 0.001f)
+        {
+            Debug.Log($"Fixed position drift: {currentPos} -> {fixedPos}");
+            transform.position = fixedPos;
         }
     }
 
@@ -146,9 +173,10 @@ public class PlayerController : MonoBehaviour
 
             if (!Physics.Raycast(hit.collider.transform.position, direction, 1f, blockingLayer))
             {
-                // Đẩy hộp
+                // Đẩy hộp 1 ô (discrete movement)
                 StartCoroutine(MoveBox(hit.collider.gameObject, boxTargetPos));
                 StartCoroutine(MoveToPosition(targetPosition));
+                
                 // SFX đẩy hộp (gọi 1 lần khi bắt đầu đẩy)
                 if (AudioManager.Instance != null) 
                {
@@ -163,22 +191,61 @@ public class PlayerController : MonoBehaviour
     private IEnumerator MoveToPosition(Vector3 target)
     {
         isMoving = true;
-        while (Vector3.Distance(transform.position, target) > 0.01f)
+        
+        // Ensure target position is grid-aligned để tránh drift
+        Vector3 gridAlignedTarget = AlignToGrid(target);
+        
+        // Simple movement - không cần smooth cho Sokoban
+        float moveDuration = 1f / moveSpeed; // Thời gian di chuyển 1 ô
+        float elapsedTime = 0f;
+        Vector3 startPos = transform.position;
+        
+        while (elapsedTime < moveDuration)
         {
-            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / moveDuration);
+            
+            transform.position = Vector3.Lerp(startPos, gridAlignedTarget, progress);
             yield return null;
         }
-        transform.position = target;
+        
+        // Snap to exact grid position
+        transform.position = gridAlignedTarget;
         isMoving = false;
     }
 
+    private Vector3 AlignToGrid(Vector3 position)
+    {
+        // Snap position to 1-unit grid để tránh floating point drift
+        return new Vector3(
+            Mathf.Round(position.x),
+            position.y, // Giữ nguyên Y
+            Mathf.Round(position.z)
+        );
+    }
+
+
+
     private IEnumerator MoveBox(GameObject box, Vector3 target)
     {
-        while (Vector3.Distance(box.transform.position, target) > 0.01f)
+        // Ensure target is grid-aligned
+        Vector3 gridAlignedTarget = AlignToGrid(target);
+        
+        // Simple movement cho box - 1 ô
+        float moveDuration = 1f / moveSpeed; // Thời gian di chuyển 1 ô
+        float elapsedTime = 0f;
+        Vector3 startPos = box.transform.position;
+        
+        while (elapsedTime < moveDuration)
         {
-            box.transform.position = Vector3.MoveTowards(box.transform.position, target, moveSpeed * Time.deltaTime);
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / moveDuration);
+            
+            box.transform.position = Vector3.Lerp(startPos, gridAlignedTarget, progress);
             yield return null;
         }
-        box.transform.position = target;
+        
+        // Snap to exact grid position
+        box.transform.position = gridAlignedTarget;
     }
 }
